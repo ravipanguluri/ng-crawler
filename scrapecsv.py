@@ -27,23 +27,19 @@ def process_csvs():
         return all_objects
 
 def get_database():
-    user = "Samg54"  # NEED TO ADD UR OWN USER
-    passw = ""          # NEED TO ADD UR OWN PASS
+    user = "ravi"
+    password = "mongo999"
 
-    # Provide the mongodb atlas url to connect python to mongodb using pymongo
-    CONNECTION_STRING = "mongodb+srv://<" + user + ">:<" + passw + ">@ngcluster.sbambjh.mongodb.net/test"
-    
-    # Create a connection using MongoClient. You can import MongoClient or use pymongo.MongoClient
-    client = MongoClient(CONNECTION_STRING)
-    
+    client = MongoClient(f"mongodb+srv://{user}:{password}@ngcluster.sbambjh.mongodb.net/?retryWrites=true&w=majority")
+
     # Create the database for our example (we will use the same database throughout the tutorial
-    return client['Project_0']
+    return client.companiesDB
 
 def main():
     dbname = get_database()
     res = process_csvs()
-    collection_name = dbname['clist']
-    collection_name.insert_one(res[0])
+    collection_name = dbname.govcompanies
+    collection_name.insert_many(res)
     return res
  
 main()
