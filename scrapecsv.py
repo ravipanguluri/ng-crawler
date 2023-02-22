@@ -1,13 +1,13 @@
 import os
 import pandas as pd
 import numpy as np
-import csv
+from pymongo import MongoClient
 
 
 def load_data(data_path):
     return (os.listdir(data_path))
 
-def main():
+def process_csvs():
     all_objects = []
 
     data_path = "./data"
@@ -23,20 +23,27 @@ def main():
         df.drop(columns = ([i for i in list(df.columns) if i not in keep_cols]), axis = 1, inplace = True)
 
         company_objects = df.to_dict(orient = 'records')
-        print(company_objects[:10])
         all_objects.extend(company_objects)
+        return all_objects
 
+def get_database():
+    user = "Samg54"  # NEED TO ADD UR OWN USER
+    passw = ""          # NEED TO ADD UR OWN PASS
 
-    return all_objects
+    # Provide the mongodb atlas url to connect python to mongodb using pymongo
+    CONNECTION_STRING = "mongodb+srv://<" + user + ">:<" + passw + ">@ngcluster.sbambjh.mongodb.net/test"
+    
+    # Create a connection using MongoClient. You can import MongoClient or use pymongo.MongoClient
+    client = MongoClient(CONNECTION_STRING)
+    
+    # Create the database for our example (we will use the same database throughout the tutorial
+    return client['Project_0']
 
-
-
-
-# def main():
-#     file = open("./data/testing.csv")
-#     csvreader = csv.reader(file)
-#     header  = []
-#     header = next(csvreader)
-#     print(header)
-#     file.close()    
+def main():
+    dbname = get_database()
+    res = process_csvs()
+    collection_name = dbname['clist']
+    collection_name.insert_one(res[0])
+    return res
+ 
 main()
