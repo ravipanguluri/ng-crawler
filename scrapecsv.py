@@ -5,7 +5,8 @@ from pymongo import MongoClient
 
 
 def load_data(data_path):
-    return (os.listdir(data_path))
+    return os.listdir(data_path)
+
 
 def process_csvs():
     all_objects = []
@@ -20,11 +21,12 @@ def process_csvs():
         df['industry'] = df['Sub Category']
 
         keep_cols = ['cname', 'website', 'industry']
-        df.drop(columns = ([i for i in list(df.columns) if i not in keep_cols]), axis = 1, inplace = True)
+        df.drop(columns=([i for i in list(df.columns) if i not in keep_cols]), axis=1, inplace=True)
 
-        company_objects = df.to_dict(orient = 'records')
+        company_objects = df.to_dict(orient='records')
         all_objects.extend(company_objects)
         return all_objects
+
 
 def get_database():
     user = "ravi"
@@ -35,11 +37,13 @@ def get_database():
     # Create the database for our example (we will use the same database throughout the tutorial
     return client.companiesDB
 
+
 def main():
     dbname = get_database()
     res = process_csvs()
     collection_name = dbname.govcompanies
     collection_name.insert_many(res)
     return res
- 
+
+
 main()

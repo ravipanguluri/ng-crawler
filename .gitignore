@@ -1,0 +1,6 @@
+
+venv/
+data/
+certs/
+.idea/
+__pycache__/

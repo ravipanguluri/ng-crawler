@@ -7,7 +7,8 @@ from bs4 import BeautifulSoup
 
 
 def load_data(data_path):
-    return (os.listdir(data_path))
+    return os.listdir(data_path)
+
 
 def process_csvs():
     all_objects = []
@@ -17,18 +18,19 @@ def process_csvs():
     print(csvs)
     for i in csvs:
         df = pd.read_csv(data_path + "/" + i)
-        df.drop(index = range(0 ,6), inplace = True)
+        df.drop(index=range(0, 6), inplace=True)
         df['cname'] = df.Vendor
         df['website'] = df.URL
         df['industry'] = df['Sub Category']
 
         keep_cols = ['cname', 'website', 'industry']
-        df.drop(columns = ([i for i in list(df.columns) if i not in keep_cols]), axis = 1, inplace = True)
+        df.drop(columns=([i for i in list(df.columns) if i not in keep_cols]), axis=1, inplace=True)
 
-        company_objects = df.to_dict(orient = 'records')
+        company_objects = df.to_dict(orient='records')
         all_objects.extend(company_objects)
         print(len(company_objects))
     return all_objects
+
 
 def get_database():
     user = "samg54"  # NEED TO ADD UR OWN USER
@@ -45,15 +47,16 @@ def get_database():
     # Create the database for our example (we will use the same database throughout the tutorial
     return client.companiesDB
 
+
 def crawlURLS(url):
     result = requests.get(url, verify = False)
 
     if result.status_code == 200:
         soup = BeautifulSoup(result.text, 'html.parser')
         soup_str = str(soup)
-        #using a set for internal links so that I do not get repeats
+        # using a set for internal links so that I do not get repeats
         internal_links = {link.get('href') for link in soup.find_all('a')}
-        html_strings = [requests.get(link, verify = False).text for link in internal_links if link and link.__contains__('^https?://')]
+        html_strings = [requests.get(link, verify=False).text for link in internal_links if link and link.__contains__('^https?://')]
         html_strings.insert(0, soup_str)
         return ''.join(html_strings)
     else:
