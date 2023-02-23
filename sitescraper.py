@@ -9,7 +9,8 @@ import re
 counter = 0
 
 def load_data(data_path):
-    return (os.listdir(data_path))
+    return os.listdir(data_path)
+
 
 def process_csvs():
     all_objects = []
@@ -19,15 +20,15 @@ def process_csvs():
     print(csvs)
     for i in csvs:
         df = pd.read_csv(data_path + "/" + i)
-        df.drop(index = range(0 ,6), inplace = True)
+        df.drop(index=range(0, 6), inplace=True)
         df['cname'] = df.Vendor
         df['website'] = df.URL
         df['industry'] = df['Sub Category']
 
         keep_cols = ['cname', 'website', 'industry']
-        df.drop(columns = ([i for i in list(df.columns) if i not in keep_cols]), axis = 1, inplace = True)
+        df.drop(columns=([i for i in list(df.columns) if i not in keep_cols]), axis=1, inplace=True)
 
-        company_objects = df.to_dict(orient = 'records')
+        company_objects = df.to_dict(orient='records')
         all_objects.extend(company_objects)
         print(len(company_objects))
     return all_objects
@@ -68,6 +69,7 @@ def get_database():
     
     # Create the database for our example (we will use the same database throughout the tutorial
     return client.companiesDB
+
 
 def crawlURLS(url):
     global counter
