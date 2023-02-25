@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 from pymongo import MongoClient
 from ScrapeAsync import ScrapeAsync
+import re
 
 # what do I want to do:
 #   for every company without blank website:
@@ -50,31 +51,29 @@ def main(collection_name):
     # collection_name.delete_many({})          # RESET DATABASE IF NEEDED
     i = 0
     scrape_obj = ScrapeAsync([(a['website'], a['cname'], "") for a in res])
-    results = scrape_obj.scrape_all()
+    scrape_obj.scrape_all()
+    scrape_obj.crawl_urls()
+    results = scrape_obj.get_scrape_results()
+    total_links = 0
+    
+    
 
     for result in results:
-        compressed_html = result.raw_html[:min(len(result.raw_html), 400000)]
-        collection_name.update_one({"cname": result.cname }, {"$set": {"html": compressed_html}})
-        print(result.root_link)
+        total_links += len(result.links)
+        # print(result.site_text)
+        # collection_name.update_one({"cname": result.cname }, {"$set": {"html": result.site_text}})
+        # print(result.root_link)
+    print(total_links)
 
     # collection_name.insert_many(res)
     print("Uploaded ", len(res), "documents")
     return res
 
 
-def test():
-    dbname = get_database()
-    print(dbname)
-    collection = dbname['aidan_gov_companies']
-    print(collection)
-    # inserted_id = collection.insert_many([{'a': '4', 'b': '2', 'c': '3'}, {'a': '0', 'b': '0', 'c': '0'}]).inserted_ids
-    inserted_id = collection.insert_many([{'a': '4', 'b': '2', 'c': '3'}]).inserted_ids
-
-    print(inserted_id)
 
 
-# test()
+
 dbname = get_database()
 main(dbname.venture_capital)
+# main(dbname.fortune500)
 
-# process_csv()

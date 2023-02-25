@@ -2,6 +2,8 @@
 from requests_futures.sessions import FuturesSession
 from ScrapeAsyncResult import ScrapeAsyncResult
 import time
+import re
+import sys
 
 
 # this class will be the base framework used to scrape large numbers of
@@ -34,6 +36,7 @@ class ScrapeAsync:
             'www.bpstechnologies.com',
             'http://www.fivepointsservices.com',
         }
+        self.scrape_results = [] * len(self.urls) #need to store 
 
     def blacklist(self):
         pass
@@ -41,13 +44,14 @@ class ScrapeAsync:
     def scrape_all(self):
         # create all the background promises
         promises = []
-        results = []
-        for url in self.urls:
+        for i in range(len(self.urls)):
+            url = self.urls[i] #extract url
             if url[0].replace('\t', '').strip() != '' and url[0].strip().lower() not in self.ignore_urls \
                                                     and 'http://https:' not in url[0]:
                 try:
                     promises.append(self.session.get(url[0], timeout=4))
-                    results.append(ScrapeAsyncResult(url[0], url[1], url[2]))
+                    host = re.match("(?:http://|https://)?(?:www.)?([a-z0-9A-Z-]+)(?:.[a-z]+)",url[0]).groups()[0]
+                    self.scrape_results.append(ScrapeAsyncResult(url[0], url[1], url[2], host + ".com"))
                 except:
                     print(f'error on {url}')
 
@@ -62,19 +66,60 @@ class ScrapeAsync:
                 # if the promise is still running after sleeping for 2 seconds...
                 if promise.running():
                     promises[i].set_exception(BaseException())
-                    results[i].cancelled = True
+                    self.scrape_results[i].cancelled = True
 
                 else:
                     try:
-                        results[i].set_raw_html(promise.result().content.decode('utf-8'))
+                        self.scrape_results[i].set_raw_html(promise.result().content.decode('utf-8'))
                     except Exception as e:
                         print(f'{e}')
-                        results[i].cancelled = True
+                        self.scrape_results[i].cancelled = True
             else:
                 try:
-                    results[i].set_raw_html(promise.result().content.decode('utf-8'))
+                    self.scrape_results[i].set_raw_html(promise.result().content.decode('utf-8'))
                 except Exception as e:
                     print(f'{e}')
-                    results[i].cancelled = True
+                    self.scrape_results[i].cancelled = True
 
-        return results
+    def get_scrape_results(self):
+        return self.scrape_results
+
+    def crawl_urls(self):
+        self.session = FuturesSession(max_workers=50) #reset the session
+
+        promises = [[]] * 10 #testing a small number of links (replace with the length of scrape_results when working)
+        for i in range(10):
+            scrape = self.scrape_results[i]
+            for link in scrape.get_all_links():
+                try:
+                    promises[i].append(self.session.get(link, timeout = 4)) #make all promises for all the internal links on the scrape results
+                except:
+                    print(f"error on {link}")
+
+        counter = 1
+        for i in range(len(promises)):
+            promise_list = promises[i] 
+            for j, promise in enumerate(promise_list): #iterate over list of promises
+                print(counter)
+                counter += 1
+                if promise.running():
+                    time.sleep(2)
+                    # if the promise is still running after sleeping for 2 seconds...
+                    if promise.running():
+                        promises[i][j].set_exception(BaseException())
+
+                    else:
+                        try:
+                            print(promise.result().url) #print urls to show that the same ones repeat over and over again
+                            self.scrape_results[i].append_link_text(promise.result().content.decode('utf-8'))
+                        except Exception as e:
+                            print(f'{e}')
+                else:
+                    try:
+                        print(promise.result().url)
+                        self.scrape_results[i].append_link_text(promise.result().content.decode('utf-8'))
+                    except Exception as e:
+                        print(f'{e}')
+        
+
+        
