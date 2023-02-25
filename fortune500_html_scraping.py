@@ -25,20 +25,19 @@ def get_database():
 
 def process_urls(urls):
     for i in range(len(urls)):
+        #check if url is a string
         if isinstance(urls[i], str):
             urls[i] = urls[i].lower()
+            #split urls into http/host/suffix groups 
             groups = urls[i].split('//')
+            #if I have a single group, it means no http, so add it
             if len(groups) == 1:
-                if not groups[0].startswith("www."):
-                    groups[0] = "www." + groups[0]
                 urls[i] =  "http://" + groups[0]
+            #if I have two groups, I want to standardize http at the begining, so just add it
             elif len(groups) == 2:
-                if not groups[1].startswith("www."):
-                    groups[1] = "www." + groups[1]
                 urls[i] =  "http://" + groups[1]
+            #this means I have 2x http in link, so remove the second version and add // that I removed on split
             elif len(groups) == 3:
-                if not groups[2].startswith("www."):
-                    groups[2] = "www." + groups[2]
                 urls[i]  = groups[0] + "//" + groups[2]
             else:
                 print(f"reached else on {urls[i]}")
@@ -47,28 +46,21 @@ def crawlURLS(url):
     global counter
     try:
         headers = {'User-Agent' : 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_2) AppleWebKit/601.3.9 (KHTML, like Gecko) Version/9.0.2 Safari/601.3.9'}
+        #10 timeout for a request
         result = requests.get(url, headers = headers, timeout = 10)
+        #extract the host name from the url
         domain = re.match("(?:http://|https://)?(?:www.)?([a-z0-9A-Z-]+)(?:.[a-z]+)",url).groups()[0]
 
         if result.status_code == 200:
             soup = BeautifulSoup(result.text, 'html.parser')
             soup_str = str(soup)
-            print(soup.find_all("a"))
             #using a set for internal links so that I do not get repeats
             internal_links = {link.get('href') for link in soup.find_all('a') if link.get('href') and domain in link.get('href')}
-            # print(internal_links)
-            # html_strings = []
-            # for link in internal_links:
-            #     if link and bool(re.search('^https?://', link)):
-            #         print(link)
-            #         try:
-            #             print(requests.get(link).text)
-            #             html_strings.append(requests.get(link).text)
-            #         except:
-            #             print("could not parse internal link")
+            #crawl internal links if they are http links that I can navigate to 
             html_strings = [requests.get(link, headers = headers, timeout = 10).text for link in internal_links if link and bool(re.search('^https?://', link))]
-            print(html_strings)
+            #get html from home page prepended to the list of html strings
             html_strings.insert(0, soup_str)
+            #concatenate the html strings to each other
             concatted = ''.join(html_strings)
             if not concatted or concatted.isspace():
                 print(f"The html came out at null for {url}")
@@ -81,32 +73,38 @@ def crawlURLS(url):
         print(f"link failed = {counter}")
         print(f"This exception was thrown {repr(e)}")
         print(url)
-        # sys.exit()
         return None
 
-def main():
-    dbname = get_database()
-    collection_name = dbname.fortune500
-    urls = collection_name.distinct("website")
+def scrapeSites(collection_name):
+    global counter
+    # get urls from db
+    urls = old_urls= collection_name.distinct("website")
     process_urls(urls)
     i = 0
     
-    for url in urls:
+    #urls and unprocessed urls might be different so I want to crawl formatted urls, but update db entries corresponding to the old ones
+    for url, old_url in zip(urls, old_urls):
         try:
-            site_text = crawlURLS(url)
+            site_text = crawlURLS(url)[:100000] #limit document size so no exception is thrown when adding to db
+            #check if i've returned a blank string (could be due to exception)
             if not site_text or site_text == "":
                 print(f" This url yielded no text {url}")
-            collection_name.update_one({"website": url}, {"$set": {"html": site_text}})
+            #update database entry corresponding to website url in the database
+            collection_name.update_one({"website": old_url}, {"$set": {"html": site_text}})
+            print(f"This is the old url {old_url}")
             print(f"added html for {i} sites")
             i += 1 
         except Exception as e:
-            print(f"{url} took too long")
-            print(f" The exception that I caught was {repr(e)}")
+            #if anything fails, catch exception and increment the number of failed links
+            counter += 1
+            print(f"The exception that I caught was {repr(e)}")
+            print(f"link failed = {counter}")
         
         
    
     return None
 
-    
- 
-main()
+
+dbname = get_database()
+scrapeSites(dbname.venture_capital)
+scrapeSites(dbname.fortune500)
