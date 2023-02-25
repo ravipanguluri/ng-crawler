@@ -53,11 +53,11 @@ def crawlURLS(url):
 
         if result.status_code == 200:
             soup = BeautifulSoup(result.text, 'html.parser')
-            soup_str = str(soup)
+            soup_str = str(soup.get_text())
             #using a set for internal links so that I do not get repeats
             internal_links = {link.get('href') for link in soup.find_all('a') if link.get('href') and domain in link.get('href')}
             #crawl internal links if they are http links that I can navigate to 
-            html_strings = [requests.get(link, headers = headers, timeout = 10).text for link in internal_links if link and bool(re.search('^https?://', link))]
+            html_strings = [re.sub("\s{2,}", " ", BeautifulSoup(requests.get(link, headers = headers, timeout = 10).text, 'html.parser').get_text()) for link in internal_links if link and bool(re.search('^https?://', link))]
             #get html from home page prepended to the list of html strings
             html_strings.insert(0, soup_str)
             #concatenate the html strings to each other
@@ -89,6 +89,7 @@ def scrapeSites(collection_name):
             #check if i've returned a blank string (could be due to exception)
             if not site_text or site_text == "":
                 print(f" This url yielded no text {url}")
+            print(site_text)
             #update database entry corresponding to website url in the database
             collection_name.update_one({"website": old_url}, {"$set": {"html": site_text}})
             print(f"This is the old url {old_url}")
