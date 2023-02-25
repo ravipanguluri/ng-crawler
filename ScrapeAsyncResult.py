@@ -1,5 +1,6 @@
 
 from bs4 import BeautifulSoup
+from bs4.element import Comment
 
 
 class ScrapeAsyncResult:
@@ -21,9 +22,21 @@ class ScrapeAsyncResult:
                 except KeyError:
                     pass
 
+    @staticmethod
+    def tag_visible(element):
+        if element.parent.name in ['style', 'script', 'head', 'title', 'meta', '[document]']:
+            return False
+        if isinstance(element, Comment):
+            return False
+        return True
+
     def get_raw_html(self):
         if not self.cancelled:
-            return self.raw_html
+            # return self.raw_html
+            soup = BeautifulSoup(self.raw_html, 'html.parser')
+            texts = soup.findAll(text=True)
+            visible_texts = filter(ScrapeAsyncResult.tag_visible, texts)
+            return u" ".join(t.strip() for t in visible_texts)
         else:
             return 'n/a'
 

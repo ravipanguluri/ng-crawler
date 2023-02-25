@@ -35,8 +35,6 @@ class ScrapeAsync:
             'http://www.fivepointsservices.com',
         }
 
-    def blacklist(self):
-        pass
 
     def scrape_all(self):
         # create all the background promises
@@ -66,13 +64,20 @@ class ScrapeAsync:
 
                 else:
                     try:
-                        results[i].set_raw_html(promise.result().content.decode('utf-8'))
+                        if promise.result().status_code > 299:
+                            results[i].set_raw_html('n/a')
+                        else:
+                            results[i].set_raw_html(promise.result().content.decode('utf-8'))
+
                     except Exception as e:
                         print(f'{e}')
                         results[i].cancelled = True
             else:
                 try:
-                    results[i].set_raw_html(promise.result().content.decode('utf-8'))
+                    if promise.result().status_code > 299:
+                        results[i].set_raw_html('n/a')
+                    else:
+                        results[i].set_raw_html(promise.result().content.decode('utf-8'))
                 except Exception as e:
                     print(f'{e}')
                     results[i].cancelled = True

@@ -7,7 +7,6 @@ from ScrapeAsync import ScrapeAsync
 # what do I want to do:
 #   for every company without blank website:
 #       get that company's HTML
-#       get that company's sub pages HTML
 
 
 def process_csv():
@@ -48,30 +47,17 @@ def get_database():
 def main():
     dbname = get_database()
     res = process_csv()
-    collection_name = dbname.aidan_gov_companies
-    # collection_name.delete_many({})          # RESET DATABASE IF NEEDED
-    i = 0
+    collection = dbname.aidan_gov_companies
+
     scrape_obj = ScrapeAsync([(a['website'], a['cname'], a['industry']) for a in res])
     results = scrape_obj.scrape_all()
 
+    array_to_insert = []
     for result in results:
-        pass
-    # collection_name.insert_many(res)
+        collection.insert_one({'cname': result.cname, 'website': result.root_link,
+                               'industry': result.industry, 'html': result.get_raw_html()})
+
+    # collection.insert_many(res)
     print("Uploaded ", len(res), "documents")
-    return res
 
-
-def test():
-    dbname = get_database()
-    print(dbname)
-    collection = dbname['aidan_gov_companies']
-    print(collection)
-    # inserted_id = collection.insert_many([{'a': '4', 'b': '2', 'c': '3'}, {'a': '0', 'b': '0', 'c': '0'}]).inserted_ids
-    inserted_id = collection.insert_many([{'a': '4', 'b': '2', 'c': '3'}]).inserted_ids
-
-    print(inserted_id)
-
-
-test()
-# main()
-# process_csv()
+main()
