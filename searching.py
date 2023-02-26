@@ -2,7 +2,10 @@ import os
 from pymongo import MongoClient
 from collections import OrderedDict
 from wordhoard import Synonyms
+from nltk.corpus import wordnet as wn
 import sys
+
+
 
 def get_database():
     user = "samg54"  # NEED TO ADD UR OWN USER
@@ -22,6 +25,21 @@ def get_database():
 
 
 query = input("Please enter a search query:\n")
+collections = []
+vc = input("If you want to include venture capital firms in your search, please type y below:\n")
+gov_companies = input("If you want to include government companies in your search, please type y below:\n")
+fortune_500 = input("If you want to include fortune 500 companies in your search, please type y below:\n")
+
+syns = wn.synsets(query)
+
+
+synonyms = set()
+
+for syn in syns:
+    for l in syn.lemmas():
+        synonyms.add(" ".join(l.name().split("_")))
+
+synonyms = list(synonyms)
 
 db = get_database()
 collections = [db.aidan_gov_companies,  db.venture_capital, db.fortune500]
@@ -34,7 +52,7 @@ synonym_results.insert(0, query)
 freq_map = dict()
 
  #MongoDB code to get exact matches
-for synonym in synonym_results:
+for synonym in synonyms:
     
     pipeline = [
     {'$project': {'occurences': { '$regexFindAll': { 'input': "$html", 'regex': synonym }}, 'cname' : 1, 'website': 1}},
