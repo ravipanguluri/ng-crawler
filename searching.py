@@ -1,10 +1,6 @@
 import os
-import pandas as pd
-import numpy as np
 from pymongo import MongoClient
 from collections import OrderedDict
-from sentence_transformers import SentenceTransformer, util
-import torch
 from wordhoard import Synonyms
 import sys
 
@@ -28,7 +24,7 @@ def get_database():
 query = input("Please enter a search query:\n")
 
 db = get_database()
-collection = db.aidan_gov_companies
+collections = [db.aidan_gov_companies,  db.venture_capital, db.fortune500]
 
 # get synonyms of words to run the search on
 synonyms_obj = Synonyms(search_string=query)
@@ -46,17 +42,20 @@ for synonym in synonym_results:
     {'$group' : { '_id' : {'cname' : '$cname', 'website' : '$website'}, 'count' : {'$sum' : 1}}},
     {'$sort': {'count': -1}}
     ]
-    
-    matches = list(collection.aggregate(pipeline))[:10]
 
-    for match in matches:
-        company_dict = match['_id']
-        cname = company_dict['cname']
-        count = match['count']
-        if cname not in freq_map:
-            freq_map[cname] = count
-        else:
-            freq_map[cname] += count
+    for collection in collections:
+        matches = list(collection.aggregate(pipeline))[:10]
+
+        for match in matches:
+            company_dict = match['_id']
+            cname = company_dict['cname']
+            count = match['count']
+            if synonym == query:
+                count *= 5
+            if cname not in freq_map:
+                freq_map[cname] = count
+            else:
+                freq_map[cname] += count
 
 sorted_freq_map = dict(sorted(freq_map.items(), key=lambda item: -item[1]))
 
@@ -71,6 +70,7 @@ for i, key in enumerate(sorted_freq_map.keys()):
     print(f"Number of Synonym Matches: {sorted_freq_map[key]}")
 
 
+#Some ML Stuff do not worry about this
     
 
 # def get_all_site_text():

@@ -21,7 +21,7 @@ class ScrapeAsyncResult:
         self.site_text = re.sub("\s{2,}", " ", soup.get_text(separator= ' '))
         for a_tag in soup.find_all("a"):
             link = a_tag.get('href')
-            if link and self.host in link and bool(re.search('^https?://', link)):
+            if link and self.host in link and bool(re.search('^https?://', link)): #check if link exists and is internal
                 self.links.append(link)
 
     def get_raw_html(self):
