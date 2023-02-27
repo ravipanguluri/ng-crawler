@@ -52,16 +52,16 @@ def main(collection_name):
     i = 0
     scrape_obj = ScrapeAsync([(a['website'], a['cname'], "") for a in res])
     scrape_obj.scrape_all()
-    scrape_obj.crawl_urls()
+    # scrape_obj.crawl_urls()
     results = scrape_obj.get_scrape_results()
     total_links = 0
     
     
 
     for result in results:
-        total_links += len(result.links)
+        total_links += len(result.links)        
         # print(result.site_text)
-        # collection_name.update_one({"cname": result.cname }, {"$set": {"html": result.site_text}})
+        collection_name.update_one({"cname": result.cname }, {"$set": {"html": result.site_text}})
         # print(result.root_link)
     print(total_links)
 
@@ -74,6 +74,8 @@ def main(collection_name):
 
 
 dbname = get_database()
-main(dbname.venture_capital)
+# main(dbname.venture_capital)
 # main(dbname.fortune500)
+main(dbname.github_sanfran)
+
 
