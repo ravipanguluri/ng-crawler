@@ -19,10 +19,9 @@ def process_csvs():
 
         keep_cols = ['cname', 'website', 'min_employees', 'max_employees', 'year_founded', 'descriptors', 'description', 'total_investment']
         df.drop(columns = ([i for i in list(df.columns) if i not in keep_cols]), axis = 1, inplace = True)
-
+        df['website'] = 'https://' + df.website
         company_objects = df.to_dict(orient = 'records')
         all_objects.extend(company_objects)
-        print((company_objects))
     return all_objects
 
 def get_database():
@@ -44,7 +43,7 @@ def main():
     dbname = get_database()
     res = process_csvs()
     collection_name = dbname.github_sanfran
-    # collection_name.delete_many({})          # RESET DATABASE IF NEEDED
+    collection_name.delete_many({})          # RESET DATABASE IF NEEDED
     collection_name.insert_many(res)
     print("Uploaded ", len(res), "documents")
     return res
