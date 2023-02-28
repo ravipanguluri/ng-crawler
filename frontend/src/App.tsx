@@ -13,6 +13,7 @@ interface individualSearchResult {
   cname: string,
   url: string,
   matchScore: string,
+  matchFreq: string
 }
 
 function App() {
@@ -71,6 +72,7 @@ function App() {
             <p>Company Name: {element.cname}</p>
             <p>Company Website: {element.url}</p>
             <p>Search Rank: {element.matchScore}</p>
+            <p>Match Frequency: {element.matchFreq}</p>
             <hr />
           </div>
         ))}
