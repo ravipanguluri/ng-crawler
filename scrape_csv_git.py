@@ -9,23 +9,19 @@ def load_data(data_path):
 
 def process_csvs():
     all_objects = []
-
-    data_path = "./data"
+    data_path = "./data2"
     csvs = load_data(data_path)
     print(csvs)
     for i in csvs:
         df = pd.read_csv(data_path + "/" + i)
-        df.drop(index = range(0 ,6), inplace = True)
-        df['cname'] = df.Vendor
-        df['website'] = df.URL
-        df['industry'] = df['Sub Category']
+        df['cname'] = df.companyname
+        df.year_founded = df.year_founded.astype(str)
 
-        keep_cols = ['cname', 'website', 'industry']
+        keep_cols = ['cname', 'website', 'min_employees', 'max_employees', 'year_founded', 'descriptors', 'description', 'total_investment']
         df.drop(columns = ([i for i in list(df.columns) if i not in keep_cols]), axis = 1, inplace = True)
-
+        df['website'] = 'https://' + df.website
         company_objects = df.to_dict(orient = 'records')
         all_objects.extend(company_objects)
-        print(len(company_objects))
     return all_objects
 
 def get_database():
@@ -46,8 +42,8 @@ def get_database():
 def main():
     dbname = get_database()
     res = process_csvs()
-    collection_name = dbname.govcompanies
-    # collection_name.delete_many({})          # RESET DATABASE IF NEEDED
+    collection_name = dbname.github_sanfran
+    collection_name.delete_many({})          # RESET DATABASE IF NEEDED
     collection_name.insert_many(res)
     print("Uploaded ", len(res), "documents")
     return res
