@@ -11,29 +11,6 @@ class ScrapeAsync:
         self.urls = urls
         # increase the max concurrent workers a little bit
         self.session = FuturesSession(max_workers=50)
-        self.ignore_urls = {
-            'www.ams1.net',
-            'http://52networks.com',
-            'www.advantageoptics.com',
-            'http://www.aesupply.org',
-            'http://www.xicomputer.com',
-            'www.affinitechinc.com',
-            'www.aitacs.com',
-            'http:///www.allcomgs.com',
-            'nan',
-            'www.aocconnect.com',
-            'www.abmfederal.com',
-            'www.archivedata.com/',
-            'http://https://www.archivedata.com/',
-            'http://https://arkhamtechnology.com/',
-            'www.ascomwireless.com',
-            'www.asymmetric.com',
-            'http:///www.avidsys.com',
-            'www.bahfed.com',
-            'http://www.best-ent.com',
-            'www.bpstechnologies.com',
-            'http://www.fivepointsservices.com',
-        }
 
 
     def scrape_all(self):
@@ -41,11 +18,10 @@ class ScrapeAsync:
         promises = []
         results = []
         for url in self.urls:
-            if url[0].replace('\t', '').strip() != '' and url[0].strip().lower() not in self.ignore_urls \
-                                                    and 'http://https:' not in url[0]:
+            if url[0].replace('\t', '').strip() != '':
                 try:
                     promises.append(self.session.get(url[0], timeout=4))
-                    results.append(ScrapeAsyncResult(url[0], url[1], url[2]))
+                    results.append(ScrapeAsyncResult(url[0], url[1], url[2], url[3]))
                 except:
                     print(f'error on {url}')
 
