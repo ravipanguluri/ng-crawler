@@ -30,6 +30,8 @@ To run the backend:
   - populate_database_general.py
 - **Frontend**
   - ./frontend
+- **Environment**
+  - ng_env.yml
   
   ## Description
   
