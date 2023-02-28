@@ -43,7 +43,8 @@ def hello():
         collections.append(db.fortune500)
 
 
-        syns = wn.synsets(search_string=request.json['technologyArea'])
+        query = request.json['technologyArea']
+        syns = wn.synsets(query)
 
 
         synonyms = set()
@@ -53,29 +54,36 @@ def hello():
                 synonyms.add(" ".join(l.name().split("_")))
 
         synonyms = list(synonyms)
-        
-        #Create a synonym object for all synonyms of the user's input string
-        synonyms_obj = Synonyms(search_string=request.json['technologyArea'])
-        synonym_results = synonyms_obj.find_synonyms()[:10] #Take only the first 10 synonyms to reduce runtime
 
-        
-        words = request.json['technologyArea'].split()
+        print(synonyms)
+
+        # collections = [db.aidan_gov_companies,  db.venture_capital, db.fortune500]
+
+        words = query.split()
+        # get synonyms of words to run the search on
         synonym_results = []
         for i in words:
             synonyms_obj = Synonyms(search_string=i)
             synonym_results.extend(synonyms_obj.find_synonyms()[:(int(10/len(words))+1)])
 
-        #Prepend original query to the list of synonyms 
-
         synonym_results.extend(synonyms)
-        synonym_results.insert(0, request.json['technologyArea'])
+        synonym_results.extend(words)
 
+        print(synonym_results)
+        for j in synonym_results:
+            if(len(str(j)) <= 4):
+                synonym_results.remove(j)
+
+        print(synonym_results)
+
+        synonym_results.insert(0, query)
         freq_map = dict()
 
-        for synonym in synonym_results:
 
-            #Create a pipeline of instructions for the db that count the number of times the user's input string appears in the site's html
-    
+
+        #MongoDB code to get exact matches
+        for synonym in set(synonym_results):
+            
             pipeline = [
             {'$project': {'occurences': { '$regexFindAll': { 'input': "$html", 'regex': synonym }}, 'cname' : 1, 'website': 1, 'length': 1}},
             {'$unwind': '$occurences'},
@@ -83,36 +91,45 @@ def hello():
             {'$sort': {'count': -1}}
             ]
 
-
             for collection in collections:
-                #Apply the pipeline to every collections that the user has indicated that they want
                 matches = list(collection.aggregate(pipeline))[:20]
 
-                #matches will return a list of dictionaries with the ObjectId as a key and attributes about match stored as an inner dictionary
                 for match in matches:
                     company_dict = match['_id']
                     cname = company_dict['cname']
                     count = match['count']
 
-                    # Giving greater weight to original query, so we add a multiplier to the count
-                    if synonym == request.json['technologyArea']:
-                        count *= 10
+                    if(len(query) > 3):         # if the query is normal length (not short)
+                        if synonym == query:    
+                            count *= 25         # heavily weight original wording
+                        elif synonym in words:
+                            count *= 2          # reasonable weight to subwords
+                        else: count *= 1/len(words)/5   # low weight to synonyms
+                    else:   
+                        if synonym == query:     # if query short (often could be abbreviation)
+                            count*=10   
+                        elif synonym in words:  # heavier relative  weighting for synonyms
+                            count *=2
+                        else:
+                            count *=1
+                        
 
-                    #Add entry to frequency map that will contanin cname and a tuple of attributes for that cname
                     if cname not in freq_map:
                         try:
                             freq_map[cname] = (count, company_dict['length'], count / company_dict['length'], company_dict['website'])
                         except:
                             pass
                     else:
-                        #If the company has already matched with a previous synonym, just increment the counr
                         attrs = list(freq_map[cname])
                         attrs[0] += count
                         freq_map[cname] = tuple(attrs)
         
+
+
+        
                         
         #sort the freqency map's entries by the match score 
-        sorted_freq_map = dict(sorted(freq_map.items(), key=lambda item: -item[1][2]))
+        sorted_freq_map = dict(sorted(freq_map.items(), key=lambda item: (-item[1][0] - 100 * item[1][2]))) # give partial weight to length penalizing 
 
         #make an output dict to match the formatting of the result flask expects to feed to the frontend
         output_dict = dict()
@@ -130,7 +147,7 @@ def hello():
 
             # pull attributes from the original dictionary's tuples
             inner_dict['url'] = sorted_freq_map[cname][3]
-            inner_dict['matchScore'] = int(100 *(sorted_freq_map[cname][2]))
+            inner_dict['matchScore'] = int(100 *(sorted_freq_map[cname][2]) + sorted_freq_map[cname][0])
             # Append result to the output dictionary
             output_dict['search_results'].append(inner_dict)
         

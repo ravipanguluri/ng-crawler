@@ -65,10 +65,12 @@ synonym_results.extend(words)
 
 print(synonym_results)
 for j in synonym_results:
+    print(j, len(str(j)))
     if(len(str(j)) <= 4):
         synonym_results.remove(j)
         print("rem", j)
     print(j)
+print(synonym_results)
 
 synonym_results.insert(0, query)
 freq_map = dict()
