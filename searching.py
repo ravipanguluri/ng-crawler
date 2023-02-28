@@ -70,18 +70,17 @@ for synonym in synonyms:
     ]
 
     for collection in collections:
-        matches = list(collection.aggregate(pipeline))[:10]
+        matches = list(collection.aggregate(pipeline))
 
         for match in matches:
             company_dict = match['_id']
             cname = company_dict['cname']
-            print(company_dict)
             count = match['count']
             if synonym == query:
                 count *= 10
             if cname not in freq_map:
                 try:
-                    freq_map[cname] = (count, company_dict['length'])
+                    freq_map[cname] = (count, company_dict['length'], count / company_dict['length'], company_dict['website'])
                 except:
                     pass
             else:
@@ -90,7 +89,7 @@ for synonym in synonyms:
                 freq_map[cname] = tuple(attrs)
                 
 
-sorted_freq_map = dict(sorted(freq_map.items(), key=lambda item: -item[1][0]))
+sorted_freq_map = dict(sorted(freq_map.items(), key=lambda item: -item[1][2]))
 
 print("\n\n======================\n\n")
 print("Query:", query)
@@ -101,7 +100,8 @@ for i, key in enumerate(sorted_freq_map.keys()):
         break
     print(f"Company Name: {key}")
     print(f"Number of Synonym Matches: {sorted_freq_map[key][0]}")
-    print(f"Match Frequency: {sorted_freq_map[key][0] / sorted_freq_map[key][1]:.2%}")
+    print(f"Match Frequency: {sorted_freq_map[key][2]:.2%}")
+    print(f"Company Website: {sorted_freq_map[key][3]:.2%}")
 
 
 #Some ML Stuff do not worry about this
