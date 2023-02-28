@@ -35,7 +35,7 @@ if startups == "y":
     collections.append(db.github_sanfran)
 collections.append(db.venture_capital)
 collections.append(db.fortune500)
-collections.append(db.aidan_gov_companies)
+# collections.append(db.aidan_gov_companies)
 
 syns = wn.synsets(query)
 
@@ -60,7 +60,7 @@ synonym_results.insert(0, query)
 freq_map = dict()
 
  #MongoDB code to get exact matches
-for synonym in synonyms:
+for synonym in synonym_results:
     
     pipeline = [
     {'$project': {'occurences': { '$regexFindAll': { 'input': "$html", 'regex': synonym }}, 'cname' : 1, 'website': 1, 'length': 1}},
@@ -70,7 +70,7 @@ for synonym in synonyms:
     ]
 
     for collection in collections:
-        matches = list(collection.aggregate(pipeline))
+        matches = list(collection.aggregate(pipeline))[:20]
 
         for match in matches:
             company_dict = match['_id']
@@ -101,7 +101,7 @@ for i, key in enumerate(sorted_freq_map.keys()):
     print(f"Company Name: {key}")
     print(f"Number of Synonym Matches: {sorted_freq_map[key][0]}")
     print(f"Match Frequency: {sorted_freq_map[key][2]:.2%}")
-    print(f"Company Website: {sorted_freq_map[key][3]}")
+    print(f"Company Website: {sorted_freq_map[key][3]}\n")
 
 
 #Some ML Stuff do not worry about this
