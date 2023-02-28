@@ -26,9 +26,16 @@ def get_database():
 
 query = input("Please enter a search query:\n")
 collections = []
-vc = input("If you want to include venture capital firms in your search, please type y below:\n")
-gov_companies = input("If you want to include government companies in your search, please type y below:\n")
-fortune_500 = input("If you want to include fortune 500 companies in your search, please type y below:\n")
+
+startups = input('if you would like to include startups in the query, please type y below:\n')
+
+db = get_database()
+if startups == "y":
+    collections.append(db.angel_list)
+    collections.append(db.github_sanfran)
+collections.append(db.venture_capital)
+collections.append(db.fortune500)
+collections.append(db.aidan_gov_companies)
 
 syns = wn.synsets(query)
 
@@ -40,9 +47,10 @@ for syn in syns:
         synonyms.add(" ".join(l.name().split("_")))
 
 synonyms = list(synonyms)
+synonyms.insert(0, query)
 
-db = get_database()
-collections = [db.aidan_gov_companies,  db.venture_capital, db.fortune500]
+
+# collections = [db.aidan_gov_companies,  db.venture_capital, db.fortune500]
 
 # get synonyms of words to run the search on
 synonyms_obj = Synonyms(search_string=query)
@@ -55,9 +63,9 @@ freq_map = dict()
 for synonym in synonyms:
     
     pipeline = [
-    {'$project': {'occurences': { '$regexFindAll': { 'input': "$html", 'regex': synonym }}, 'cname' : 1, 'website': 1}},
+    {'$project': {'occurences': { '$regexFindAll': { 'input': "$html", 'regex': synonym }}, 'cname' : 1, 'website': 1, 'length': 1}},
     {'$unwind': '$occurences'},
-    {'$group' : { '_id' : {'cname' : '$cname', 'website' : '$website'}, 'count' : {'$sum' : 1}}},
+    {'$group' : { '_id' : {'cname' : '$cname', 'website' : '$website', 'length' : '$length'}, 'count' : {'$sum' : 1}}},
     {'$sort': {'count': -1}}
     ]
 
@@ -67,15 +75,22 @@ for synonym in synonyms:
         for match in matches:
             company_dict = match['_id']
             cname = company_dict['cname']
+            print(company_dict)
             count = match['count']
             if synonym == query:
-                count *= 5
+                count *= 10
             if cname not in freq_map:
-                freq_map[cname] = count
+                try:
+                    freq_map[cname] = (count, company_dict['length'])
+                except:
+                    pass
             else:
-                freq_map[cname] += count
+                attrs = list(freq_map[cname])
+                attrs[0] += count
+                freq_map[cname] = tuple(attrs)
+                
 
-sorted_freq_map = dict(sorted(freq_map.items(), key=lambda item: -item[1]))
+sorted_freq_map = dict(sorted(freq_map.items(), key=lambda item: -item[1][0]))
 
 print("\n\n======================\n\n")
 print("Query:", query)
@@ -85,7 +100,8 @@ for i, key in enumerate(sorted_freq_map.keys()):
     if i == 10:
         break
     print(f"Company Name: {key}")
-    print(f"Number of Synonym Matches: {sorted_freq_map[key]}")
+    print(f"Number of Synonym Matches: {sorted_freq_map[key][0]}")
+    print(f"Match Frequency: {sorted_freq_map[key][0] / sorted_freq_map[key][1]:.2%}")
 
 
 #Some ML Stuff do not worry about this

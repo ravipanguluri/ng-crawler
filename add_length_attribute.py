@@ -1,4 +1,5 @@
 from pymongo import MongoClient
+import sys
 
 def get_database():
     user = "samg54"  # NEED TO ADD UR OWN USER
@@ -26,9 +27,14 @@ def get_all_site_text(collection):
     return cnames, site_text
 
 db = get_database()
-collections = [db.aidan_gov_companies,  db.venture_capital, db.fortune500]
+# collections = [db.angel_list, db.fortune500, db.venture_capital, db.github_sanfran]
+collections = [db.angel_list, db.github_sanfran]
 
 for collection in collections:
     for doc in collection.find():
-        newvalues = { "$set": { 'length': len(doc['html']) } }
-        collection.update_one({'cname' : doc['cname']}, newvalues)
+        try:
+            newvalues = { "$set": { 'length': len(doc['html']) } }
+            collection.update_one({'cname' : doc['cname']}, newvalues)
+        except:
+            pass
+
