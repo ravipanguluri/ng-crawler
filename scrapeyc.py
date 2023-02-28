@@ -50,7 +50,7 @@ def main():
     urls  = ["https://www.ycombinator.com/topcompanies", "https://www.ycombinator.com/topcompanies/public   "]
     for url in urls:
         res = process_url(url)
-        collection_name = dbname.YC        # access YC collecton on db
+        collection_name = dbname.test_sanfran        # access YC collecton on db
         # collection_name.delete_many({})          # RESET DATABASE IF NEEDED
         collection_name.insert_many(res)
         print("Uploaded ", len(res), "documents")

@@ -3,6 +3,7 @@ from flask_cors import CORS
 from flask import request
 from wordhoard import Synonyms
 from pymongo import MongoClient
+from nltk.corpus import wordnet as wn
 import ast
 
 app = Flask(__name__)
@@ -41,11 +42,32 @@ def hello():
         collections.append(db.venture_capital)
         collections.append(db.fortune500)
 
+
+        syns = wn.synsets(search_string=request.json['technologyArea'])
+
+
+        synonyms = set()
+
+        for syn in syns:
+            for l in syn.lemmas():
+                synonyms.add(" ".join(l.name().split("_")))
+
+        synonyms = list(synonyms)
+        
         #Create a synonym object for all synonyms of the user's input string
         synonyms_obj = Synonyms(search_string=request.json['technologyArea'])
         synonym_results = synonyms_obj.find_synonyms()[:10] #Take only the first 10 synonyms to reduce runtime
 
+        
+        words = request.json['technologyArea'].split()
+        synonym_results = []
+        for i in words:
+            synonyms_obj = Synonyms(search_string=i)
+            synonym_results.extend(synonyms_obj.find_synonyms()[:(int(10/len(words))+1)])
+
         #Prepend original query to the list of synonyms 
+
+        synonym_results.extend(synonyms)
         synonym_results.insert(0, request.json['technologyArea'])
 
         freq_map = dict()
@@ -108,7 +130,7 @@ def hello():
 
             # pull attributes from the original dictionary's tuples
             inner_dict['url'] = sorted_freq_map[cname][3]
-            inner_dict['matchScore'] = sorted_freq_map[cname][0]
+            inner_dict['matchScore'] = int(100 *(sorted_freq_map[cname][2]))
             # Append result to the output dictionary
             output_dict['search_results'].append(inner_dict)
         

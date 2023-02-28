@@ -71,8 +71,8 @@ function App() {
           <div className='searchResult'>
             <p>Company Name: {element.cname}</p>
             <p>Company Website: {element.url}</p>
-            <p>Search Rank: {element.matchScore}</p>
-            <p>Match Frequency: {element.matchFreq}</p>
+            <p>Match Score: {element.matchScore}</p>
+            {/* <p>Match Frequency: {element.matchFreq}</p> */}
             <hr />
           </div>
         ))}

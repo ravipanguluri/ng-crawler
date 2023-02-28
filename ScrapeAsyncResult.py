@@ -31,6 +31,7 @@ class ScrapeAsyncResult:
             return 'n/a'
 
     def get_all_links(self):
+        self.set_raw_html(self.get_raw_html())
         return self.links
     
     def append_link_text(self, raw_html: str):

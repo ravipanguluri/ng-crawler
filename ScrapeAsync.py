@@ -88,9 +88,9 @@ class ScrapeAsync:
         self.session = FuturesSession(max_workers=50) #reset the session
 
         promises = [[]] * 10 #testing a small number of links (replace with the length of scrape_results when working)
-        for i in range(10):
+        for i in range(len(self.scrape_results)):
             scrape = self.scrape_results[i]
-            for link in scrape.get_all_links():
+            for link in scrape.get_all_links()[:75]:
                 try:
                     promises[i].append(self.session.get(link, timeout = 4)) #make all promises for all the internal links on the scrape results
                 except:
