@@ -101,7 +101,7 @@ for i, key in enumerate(sorted_freq_map.keys()):
     print(f"Company Name: {key}")
     print(f"Number of Synonym Matches: {sorted_freq_map[key][0]}")
     print(f"Match Frequency: {sorted_freq_map[key][2]:.2%}")
-    print(f"Company Website: {sorted_freq_map[key][3]:.2%}")
+    print(f"Company Website: {sorted_freq_map[key][3]}")
 
 
 #Some ML Stuff do not worry about this
