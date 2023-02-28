@@ -12,8 +12,7 @@ const COMPANIES_SEARCH_ENDPOINT = 'search_companies';
 interface individualSearchResult {
   cname: string,
   url: string,
-  matchScore: string,
-  matchFreq: string
+  matchScore: string
 }
 
 function App() {
@@ -47,8 +46,8 @@ function App() {
   return (
     <div className="App">
       <header className="App-header">
-        <h1>Welcome to company search!</h1>
-        <h3>Optimizing Google</h3>
+        <h1>Welcome to Startup Search</h1>
+        <h3>Optimizing Startup and Trend Scouting</h3>
         <h4>To get started, type in a technology area:</h4>
         <TextField 
           id="filled-basic" 
@@ -72,7 +71,6 @@ function App() {
             <p>Company Name: {element.cname}</p>
             <p>Company Website: {element.url}</p>
             <p>Search Rank: {element.matchScore}</p>
-            <p>Match Frequency: {element.matchFreq}</p>
             <hr />
           </div>
         ))}

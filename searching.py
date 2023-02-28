@@ -3,6 +3,7 @@ from pymongo import MongoClient
 from collections import OrderedDict
 from wordhoard import Synonyms
 from nltk.corpus import wordnet as wn
+import scipy
 import sys
 
 
@@ -47,20 +48,37 @@ for syn in syns:
         synonyms.add(" ".join(l.name().split("_")))
 
 synonyms = list(synonyms)
-synonyms.insert(0, query)
 
+print(synonyms)
 
 # collections = [db.aidan_gov_companies,  db.venture_capital, db.fortune500]
 
+words = query.split()
 # get synonyms of words to run the search on
-synonyms_obj = Synonyms(search_string=query)
-synonym_results = synonyms_obj.find_synonyms()[:10]
-synonym_results.insert(0, query)
+synonym_results = []
+for i in words:
+    synonyms_obj = Synonyms(search_string=i)
+    synonym_results.extend(synonyms_obj.find_synonyms()[:(int(10/len(words))+1)])
 
+synonym_results.extend(synonyms)
+synonym_results.extend(words)
+
+print(synonym_results)
+for j in synonym_results:
+    print(j, len(str(j)))
+    if(len(str(j)) <= 4):
+        synonym_results.remove(j)
+        print("rem", j)
+    print(j)
+print(synonym_results)
+
+synonym_results.insert(0, query)
 freq_map = dict()
 
+
+
  #MongoDB code to get exact matches
-for synonym in synonym_results:
+for synonym in set(synonym_results):
     
     pipeline = [
     {'$project': {'occurences': { '$regexFindAll': { 'input': "$html", 'regex': synonym }}, 'cname' : 1, 'website': 1, 'length': 1}},
@@ -76,8 +94,22 @@ for synonym in synonym_results:
             company_dict = match['_id']
             cname = company_dict['cname']
             count = match['count']
-            if synonym == query:
-                count *= 10
+
+            if(len(query) > 3):         # if the query is normal length (not short)
+                if synonym == query:    
+                    count *= 25         # heavily weight original wording
+                elif synonym in words:
+                    count *= 2          # reasonable weight to subwords
+                else: count *= 1/len(words)/5   # low weight to synonyms
+            else:   
+                if synonym == query:     # if query short (often could be abbreviation)
+                    count*=10   
+                elif synonym in words:  # heavier relative  weighting for synonyms
+                    count *=2
+                else:
+                    count *=1
+                
+
             if cname not in freq_map:
                 try:
                     freq_map[cname] = (count, company_dict['length'], count / company_dict['length'], company_dict['website'])
@@ -87,9 +119,12 @@ for synonym in synonym_results:
                 attrs = list(freq_map[cname])
                 attrs[0] += count
                 freq_map[cname] = tuple(attrs)
+ 
                 
 
-sorted_freq_map = dict(sorted(freq_map.items(), key=lambda item: -item[1][2]))
+# sorted_freq_map = dict(sorted(freq_map.items(), key=lambda item: -item[1][0]))
+sorted_freq_map = dict(sorted(freq_map.items(), key=lambda item: (-item[1][0] - 100 * item[1][2]))) # give partial weight to length penalizing 
+
 
 print("\n\n======================\n\n")
 print("Query:", query)
