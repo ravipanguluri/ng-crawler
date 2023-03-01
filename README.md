@@ -39,3 +39,5 @@ To run the backend:
   
   Altogether, Startup Search allows its users to quickly find reputable companies in specialized technology areas, where typical search engines such as Google will only reveal articles with their own lists of companies, that are often repeated over each additional search entry. Startup Search can easily be changed to show as many search results as neccessary, although we only display 10 in our current frontend for ease-of-display. While google searches will yield ad-heavy results, Startup Search goes to each company's website directly and sees what they have to say about themselves - allowing the user to find hidden gyms in different industries that may be difficult to find by traditional means.
   
+  Run the frontend react app and backend flask app simutaneously to give it a try!
+  
