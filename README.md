@@ -23,6 +23,8 @@ To run the backend:
   - scrapeyc.py
   - scrape_csv_git.py
   - scrape andreessen_horowitz.py
+  - scrape_angellist.py
+  - upload_angellist.py
 - **Html Scraping**
   - ScrapeAsync.py
   - ScrapeAsyncResult.py
